@@ -3,7 +3,7 @@ import requests
 import json
 import datetime
 import re
-from pinatapy import PinataPy
+
 
 headers = {
     "Accept-Encoding": "gzip, deflate, br",
@@ -118,7 +118,13 @@ def generateJson(studio_id):
                 r["title"] = s["title"]
                 if "studio" in s:
                     r["studio"] = s["studio"]["name"]
-                r["gallery"] = None
+                if s["images"]:
+                    if len(s["images"]):
+                        r["covers"] = [s["images"][0]["url"]]
+                    r["gallery"] = [x["url"] for x in s["images"]]
+                else:
+                    r["gallery"] = None
+#                r["gallery"] = None
                 tags = []
                 if "tags" in s:
                     for t in s["tags"]:
@@ -164,12 +170,10 @@ def generateJson(studio_id):
             res = getScenes(studio_id, page, per_page)
             print("loop")
 
+#    data["scenes"] = sorted(scenes_list, key=lambda d: d['scene_id'])
     data["scenes"] = scenes_list
     return data
 
-
-print( os.getenv('PINATA_API_KEY'))
-print(os.getenv('PINATA_SECRET_KEY'))
 
 if __name__ == '__main__':
     id='c85a3d13-c1b9-48d0-986e-3bfceaf0afe5'
@@ -177,15 +181,5 @@ if __name__ == '__main__':
     print(res)
     file=id+'.json'
 
-    pinata = PinataPy( os.getenv('PINATA_API_KEY'), os.getenv('PINATA_SECRET_KEY'))
-    upload={}
-    upload["pinataMetadata"]={"name":file}
-    upload["pinataContent"]=res
-
-    status=pinata.pin_json_to_ipfs(upload)
-    print(status)
-
-#    with open(file, 'w') as outfile:
-#        json.dump(res, outfile)
-
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
+    with open(file, 'w') as outfile:
+        json.dump(res, outfile,sort_keys=True)
